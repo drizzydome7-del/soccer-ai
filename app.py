@@ -41,7 +41,7 @@ if st.button("🚀 Analyze Upcoming Match"):
   if not football_api_key or not gemini_api_key:
     st.error("Please provide both API keys in the sidebar.")
   else:
-    # Explicitly set the environment variable so the library accepts the AQ key
+    # Set environment variable for the Google GenAI SDK
     os.environ["GEMINI_API_KEY"] = gemini_api_key
 
     with st.spinner("Fetching live match data..."):
@@ -64,31 +64,36 @@ if st.button("🚀 Analyze Upcoming Match"):
         )
 
         with st.spinner("🤖 Consulting your AI oddsmaker..."):
-          # Initialize client without passing api_key directly, letting it read os.environ safely
-          client = genai.Client()
-          prompt_text = f"""
-                    You are an expert soccer betting analyst and oddsmaker (like Linemaker AI). 
-                    Analyze the upcoming match: {home_team} (Home) playing against {away_team} (Away). Date: {match_date}.
-                    
-                    Provide a professional betting breakdown containing:
-                    1. Match Overview & Expected Vibe
-                    2. Key Factors to Watch
-                    3. Best Betting Prediction (Match Winner, Both Teams to Score, or Over/Under goals)
-                    4. Confidence Level (Out of 10)
-                    
-                    Keep it punchy, sharp, and structured nicely.
-                    """
+          try:
+            client = genai.Client()
+            prompt_text = f"""
+                        You are an expert soccer betting analyst and oddsmaker (like Linemaker AI). 
+                        Analyze the upcoming match: {home_team} (Home) playing against {away_team} (Away). Date: {match_date}.
+                        
+                        Provide a professional betting breakdown containing:
+                        1. Match Overview & Expected Vibe
+                        2. Key Factors to Watch
+                        3. Best Betting Prediction (Match Winner, Both Teams to Score, or Over/Under goals)
+                        4. Confidence Level (Out of 10)
+                        
+                        Keep it punchy, sharp, and structured nicely.
+                        """
 
-          ai_response = client.models.generate_content(
-              model="gemini-2.5-flash",
-              contents=prompt_text,
-          )
+            ai_response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt_text,
+            )
 
-          st.markdown("---")
-          st.markdown(ai_response.text)
+            st.markdown("---")
+            st.markdown(ai_response.text)
+
+          except Exception as e:
+            st.error(
+                f"❌ AI Generation Failed. Exact Error Details: {str(e)}"
+            )
       else:
         st.warning(
             "No scheduled matches found for this competition right now."
         )
     else:
-      st.error(f"Failed to fetch data. Error code: {response.status_code}")
+      st.error(f"Failed to fetch match data. Error code: {response.status_code}")
