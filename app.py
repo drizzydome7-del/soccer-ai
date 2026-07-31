@@ -1,3 +1,4 @@
+import os
 from google import genai
 import requests
 import streamlit as st
@@ -40,6 +41,9 @@ if st.button("🚀 Analyze Upcoming Match"):
   if not football_api_key or not gemini_api_key:
     st.error("Please provide both API keys in the sidebar.")
   else:
+    # Explicitly set the environment variable so the library accepts the AQ key
+    os.environ["GEMINI_API_KEY"] = gemini_api_key
+
     with st.spinner("Fetching live match data..."):
       url = f"https://api.football-data.org/v4/competitions/{league_code}/matches?status=SCHEDULED"
       headers = {"X-Auth-Token": football_api_key}
@@ -60,7 +64,8 @@ if st.button("🚀 Analyze Upcoming Match"):
         )
 
         with st.spinner("🤖 Consulting your AI oddsmaker..."):
-          client = genai.Client(api_key=gemini_api_key)
+          # Initialize client without passing api_key directly, letting it read os.environ safely
+          client = genai.Client()
           prompt_text = f"""
                     You are an expert soccer betting analyst and oddsmaker (like Linemaker AI). 
                     Analyze the upcoming match: {home_team} (Home) playing against {away_team} (Away). Date: {match_date}.
