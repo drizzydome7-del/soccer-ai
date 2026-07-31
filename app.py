@@ -13,17 +13,23 @@ st.write(
     "Generate professional, oddsmaker-grade betting breakdowns instantly."
 )
 
-# Sidebar for secure configuration
+# Safely load keys from Streamlit Secrets (with fallback to sidebar inputs if needed)
+secret_gemini = (
+    st.secrets.get("GEMINI_API_KEY", "") if "secrets" in dir(st) else ""
+)
+secret_football = (
+    st.secrets.get("FOOTBALL_API_KEY", "f90e1e51400546f4a73a3d4be7fa2726")
+    if "secrets" in dir(st)
+    else "f90e1e51400546f4a73a3d4be7fa2726"
+)
+
+# Sidebar configuration
 st.sidebar.header("API Configuration")
 football_api_key = st.sidebar.text_input(
-    "Football-Data API Key",
-    type="password",
-    value="f90e1e51400546f4a73a3d4be7fa2726",
+    "Football-Data API Key", type="password", value=secret_football
 )
 gemini_api_key = st.sidebar.text_input(
-    "Gemini API Key",
-    type="password",
-    value="AQ.Ab8RN6Lg6SyGi6HUsgTQVlvx4y0dIDTPAC5WYIAK56IjGkla-g",
+    "Gemini API Key / Token", type="password", value=secret_gemini
 )
 
 # League Selection Dropdown
@@ -39,11 +45,8 @@ league_code = league_choice.split("(")[1].replace(")", "")
 
 if st.button("🚀 Analyze Upcoming Match"):
   if not football_api_key or not gemini_api_key:
-    st.error("Please provide both API keys in the sidebar.")
+    st.error("Please provide both API keys in the sidebar or secrets.")
   else:
-    # Set environment variable for the Google GenAI SDK
-    os.environ["GEMINI_API_KEY"] = gemini_api_key
-
     with st.spinner("Fetching live match data..."):
       url = f"https://api.football-data.org/v4/competitions/{league_code}/matches?status=SCHEDULED"
       headers = {"X-Auth-Token": football_api_key}
@@ -65,7 +68,8 @@ if st.button("🚀 Analyze Upcoming Match"):
 
         with st.spinner("🤖 Consulting your AI oddsmaker..."):
           try:
-            client = genai.Client()
+            # For OAuth / service tokens, explicitly pass the token and configure client
+            client = genai.Client(api_key=gemini_api_key)
             prompt_text = f"""
                         You are an expert soccer betting analyst and oddsmaker (like Linemaker AI). 
                         Analyze the upcoming match: {home_team} (Home) playing against {away_team} (Away). Date: {match_date}.
