@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+from google import genai
 import pandas as pd
 import requests
 import streamlit as st
@@ -13,6 +14,9 @@ st.set_page_config(
 # --- YOUR API KEYS ---
 FOOTBALL_API_KEY = "f90e1e51400546f4a73a3d4be7fa2726"
 AQ_KEY = "AQ.Ab8RN6Kk4SJyCMqwwg6OoMNer8H_XX2smo0zEArpRFiENAZBEQ"
+
+# --- INITIALIZE OFFICIAL GEMINI CLIENT (Supports AQ. Keys) ---
+client = genai.Client(api_key=AQ_KEY)
 
 
 # --- HELPER FUNCTIONS ---
@@ -158,28 +162,12 @@ Provide an institutional-grade betting breakdown formatted strictly as follows (
 Constraint: Avoid filler words, generic fan opinions, or emotional commentary. Every statement must be anchored to tactical reality or statistical probability.
 """
 
-            gemini_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
-            gemini_headers = {
-                "x-goog-api-key": AQ_KEY,
-                "Content-Type": "application/json",
-            }
-            payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
-
-            ai_response = requests.post(
-                gemini_url, headers=gemini_headers, json=payload
-            )
-
-            if ai_response.status_code == 200:
-              ai_data = ai_response.json()
-              try:
-                prediction_text = (
-                    ai_data.get("candidates", [])[0]
-                    .get("content", {})
-                    .get("parts", [])[0]
-                    .get("text", "No response text found.")
-                )
-              except Exception:
-                prediction_text = str(ai_data)
+            try:
+              # Use the official Google GenAI SDK client
+              ai_response = client.models.generate_content(
+                  model="gemini-2.5-flash", contents=prompt_text
+              )
+              prediction_text = ai_response.text
 
               st.markdown(prediction_text)
 
@@ -202,8 +190,10 @@ Constraint: Avoid filler words, generic fan opinions, or emotional commentary. E
                     conf_score,
                 )
                 st.info("📂 Automatically logged to predictions_log.csv!")
-            else:
-              st.error(f"Gemini API Error: {ai_response.text}")
+
+            except Exception as e:
+              st.error(f"Gemini API Error: {str(e)}")
+
             st.divider()
         else:
           st.warning("No scheduled matches found for this league.")
