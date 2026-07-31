@@ -158,7 +158,7 @@ Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this
 {{"home_win_prob": <number 0-100>, "draw_prob": <number 0-100>, "away_win_prob": <number 0-100>, "reasoning": "<2-3 sentence tactical rationale>"}}
 The three probabilities must sum to approximately 100."""
 
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
     headers = {"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"}
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
