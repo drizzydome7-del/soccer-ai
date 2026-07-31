@@ -1,5 +1,0 @@
-flask
-requests
-google-genai
-pandas
-gunicorn
